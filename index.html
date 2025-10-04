@@ -1,82 +1,402 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Tra cứu phạt nguội</title>
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <meta name="description" content="Công cụ tra cứu phạt nguội theo biển số, hỗ trợ ô tô, xe máy, xe đạp điện." />
+  /favicon.ico
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
-    .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    h1 { text-align: center; color: #333; }
-    label { display: block; margin-top: 15px; }
-    input, select { width: 100%; padding: 10px; margin-top: 5px; }
-    button { margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
-    button:hover { background: #0056b3; }
-    .result { margin-top: 30px; }
-    .error { color: red; margin-top: 10px; }
+    :root{
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --brand:#0a67f2;
+      --brand-600:#0a58cf;
+      --error:#e11d48;
+      --ok:#16a34a;
+      --border:#e5e7eb;
+      --chip:#eef2ff;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+      background: var(--bg);
+      color:var(--text);
+      line-height:1.5;
+    }
+    .container{
+      max-width:860px;
+      margin:40px auto;
+      padding:0 16px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:14px;
+      box-shadow:0 8px 24px rgba(16,24,40,.06);
+      padding:24px;
+    }
+    header{
+      text-align:center;
+      margin-bottom:12px;
+    }
+    h1{
+      margin:0 0 8px;
+      font-size:24px;
+    }
+    p.lead{
+      margin:0;
+      color:var(--muted);
+      font-size:14px;
+    }
+    form{
+      display:grid;
+      grid-template-columns:1fr 180px 140px;
+      gap:12px;
+      margin-top:20px;
+    }
+    @media (max-width:720px){
+      form{grid-template-columns:1fr 1fr}
+      form .full{grid-column:1 / -1}
+      form .actions{grid-column:1 / -1}
+    }
+    label{display:block;font-weight:600;margin-bottom:6px}
+    input,select,button{
+      width:100%;
+      padding:12px 14px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      font-size:14px;
+      background:#fff;
+      color:var(--text);
+      outline:none;
+      transition:border-color .15s, box-shadow .15s;
+    }
+    input:focus,select:focus{
+      border-color:var(--brand);
+      box-shadow:0 0 0 3px rgba(10,103,242,.15);
+    }
+    input::placeholder{color:#a1a1aa}
+    .actions{
+      display:flex;gap:10px;align-items:flex-end;justify-content:flex-end
+    }
+    button.primary{
+      background:var(--brand);
+      color:#fff;
+      border:1px solid transparent;
+      cursor:pointer;
+      font-weight:600;
+    }
+    button.primary:hover{background:var(--brand-600)}
+    button.secondary{
+      background:#fff;
+      border-color:var(--border);
+      color:var(--text);
+      cursor:pointer;
+    }
+    button:disabled{opacity:.7;cursor:not-allowed}
+    .helper{
+      margin-top:8px;color:var(--muted);font-size:12px
+    }
+    .status{
+      margin-top:16px;
+      min-height:20px;
+    }
+    .error{
+      color:#fff;background:var(--error);
+      padding:10px 12px;border-radius:10px;font-size:14px
+    }
+    .ok{
+      color:#065f46;background:#ecfdf5;border:1px solid #bbf7d0;
+      padding:10px 12px;border-radius:10px;font-size:14px
+    }
+    .results{
+      margin-top:18px;
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+    }
+    .result-card{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:14px;
+      background:#fff;
+    }
+    .result-card h3{
+      margin:0 0 8px;
+      font-size:16px;
+    }
+    .meta{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 0}
+    .chip{
+      background:var(--chip);
+      color:#3730a3;
+      padding:4px 8px;border-radius:999px;font-size:12px;border:1px solid #e0e7ff;
+    }
+    .divider{height:1px;background:var(--border);margin:12px 0}
+    .empty{
+      padding:16px;border:1px dashed var(--border);border-radius:12px;color:var(--muted);text-align:center
+    }
+    .spinner{
+      width:18px;height:18px;border:3px solid #dbeafe;border-top-color:var(--brand);
+      border-radius:50%;display:inline-block;animation:spin 0.9s linear infinite;vertical-align:-3px;margin-right:8px
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    footer{
+      margin-top:20px;color:var(--muted);font-size:12px;text-align:center
+    }
+    noscript{
+      display:block;margin-top:12px;
+      color:#b91c1c;background:#fee2e2;border:1px solid #fecaca;padding:10px;border-radius:10px
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Tra cứu phạt nguội</h1>
-    <label for="plate">Biển số xe:</label>
-    <input type="text" id="plate" placeholder="VD: 30A12345">
-    <label for="type">Loại phương tiện:</label>
-    <select id="type">
-      <option value="1">Ô tô</option>
-      <option value="2">Xe máy</option>
-      <option value="3">Xe đạp điện</option>
-    </select>
-    <button onclick="search()">Tra cứu</button>
-    <div class="error" id="error"></div>
-    <div class="result" id="result"></div>
-  </div>
-  <script>
-    async function search() {
-      const plate = document.getElementById('plate').value.trim();
-      const type = document.getElementById('type').value;
-      const errorDiv = document.getElementById('error');
-      const resultDiv = document.getElementById('result');
-      errorDiv.textContent = '';
-      resultDiv.innerHTML = '';
+    <div class="card" role="main" aria-labelledby="title">
+      <header>
+        <h1 id="title">Tra cứu phạt nguội</h1>
+        <p class="lead">Nhập biển số & chọn loại phương tiện. Dữ liệu lấy qua API proxy <code>/api/violation</code>.</p>
+      </header>
 
-      if (!plate) {
-        errorDiv.textContent = 'Vui lòng nhập biển số xe.';
+      <form id="lookupForm" novalidate>
+        <div class="full">
+          <label for="plate">Biển số xe</label>
+          <input
+            type="text"
+            id="plate"
+            name="plate"
+            inputmode="latin"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="VD: 51F77777, 30A12345, 43A-123.45"
+            aria-describedby="plateHelp"
+            required
+          />
+          <div id="plateHelp" class="helper">Mẹo: Nhập tự do, hệ thống sẽ tự chuẩn hoá (viết hoa, bỏ khoảng trắng & dấu gạch).</div>
+        </div>
+
+        <div>
+          <label for="type">Loại phương tiện</label>
+          <select id="type" name="type" required>
+            <option value="1">Ô tô</option>
+            <option value="2">Xe máy</option>
+            <option value="3">Xe đạp điện</option>
+          </select>
+        </div>
+
+        <div class="actions">
+          <button type="button" id="resetBtn" class="secondary" title="Xoá kết quả">Xoá</button>
+          <button type="submit" id="submitBtn" class="primary" title="Tra cứu">
+            Tra cứu
+          </button>
+        </div>
+      </form>
+
+      <div class="status" aria-live="polite">
+        <!-- Hiển thị trạng thái (đang tải, lỗi, thành công) -->
+      </div>
+
+      <div class="results" id="results" aria-live="polite" aria-busy="false">
+        <!-- Thẻ kết quả sẽ được render tại đây -->
+      </div>
+
+      <noscript>Trình duyệt của bạn đang tắt JavaScript. Hãy bật JavaScript để sử dụng tính năng tra cứu.</noscript>
+    </div>
+
+    <footer>
+      <div>© 2025 - Công cụ tra cứu phạt nguội (client). Không lưu trữ dữ liệu người dùng trên máy chủ.</div>
+    </footer>
+  </div>
+
+  <script>
+    // ====== CẤU HÌNH ======
+    const API_URL = '/api/violation'; // Proxy Next.js của anh
+
+    // ====== TIỆN ÍCH ======
+    const $ = (sel, root = document) => root.querySelector(sel);
+
+    function normalizePlate(raw){
+      if (!raw) return '';
+      return String(raw).toUpperCase().replace(/[\s-]/g, '');
+    }
+
+    function setLoading(isLoading){
+      const submitBtn = $('#submitBtn');
+      const statusBox = $('.status');
+      const results = $('#results');
+      results.setAttribute('aria-busy', String(isLoading));
+
+      if (isLoading){
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner"></span>Đang tra cứu...';
+        statusBox.innerHTML = '';
+      } else {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Tra cứu';
+      }
+    }
+
+    function showError(message, detail){
+      const statusBox = $('.status');
+      const safe = String(message || 'Đã xảy ra lỗi').replace(/</g,'&lt;');
+      let html = `<div class="error">${safe}</div>`;
+      if (detail){
+        const pretty = typeof detail === 'string' ? detail : JSON.stringify(detail, null, 2);
+        html += `<pre style="white-space:pre-wrap;margin-top:8px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;max-height:240px;overflow:auto">${pretty.replace(/</g,'&lt;')}</pre>`;
+      }
+      statusBox.innerHTML = html;
+    }
+
+    function showOk(message){
+      const statusBox = $('.status');
+      statusBox.innerHTML = `<div class="ok">${String(message).replace(/</g,'&lt;')}</div>`;
+    }
+
+    function clearUI(){
+      $('.status').innerHTML = '';
+      $('#results').innerHTML = '';
+    }
+
+    function renderItem(item, index){
+      // item: { time, location, violation, agency, ... }
+      const safe = (v) => (v==null ? '' : String(v)).replace(/</g,'&lt;');
+      const title = `Vi phạm #${index+1}`;
+      return `
+        <article class="result-card">
+          <h3>${title}</h3>
+          <div><strong>Thời gian:</strong> ${safe(item.time)}</div>
+          <div><strong>Địa điểm:</strong> ${safe(item.location)}</div>
+          <div class="divider"></div>
+          <div><strong>Hành vi:</strong> ${safe(item.violation)}</div>
+          <div class="meta">
+            <span class="chip">Đơn vị: ${safe(item.agency)}</span>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderResults(data, plate, type){
+      const box = $('#results');
+      box.innerHTML = '';
+
+      const headerCard = document.createElement('div');
+      headerCard.className = 'result-card';
+      headerCard.innerHTML = `
+        <h3>Kết quả tra cứu</h3>
+        <div class="meta" style="margin-top:6px">
+          <span class="chip">Biển số: ${plate}</span>
+          <span class="chip">Loại xe: ${type === 1 ? 'Ô tô' : type === 2 ? 'Xe máy' : 'Xe đạp điện'}</span>
+        </div>
+      `;
+      box.appendChild(headerCard);
+
+      const list = Array.isArray(data?.data) ? data.data : [];
+      if (list.length === 0){
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = 'Không có vi phạm nào được tìm thấy.';
+        box.appendChild(empty);
         return;
       }
 
-      try {
-        const res = await fetch('/api/violation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ plate, type })
-        });
-
-        if (!res.ok) {
-          errorDiv.textContent = 'Lỗi khi gọi API: ' + res.status;
-          return;
-        }
-
-        const data = await res.json();
-        if (data.data && data.data.length > 0) {
-          data.data.forEach(item => {
-            const div = document.createElement('div');
-            div.innerHTML = `
-              <p><strong>Thời gian:</strong> ${item.time}</p>
-              <p><strong>Địa điểm:</strong> ${item.location}</p>
-              <p><strong>Hành vi:</strong> ${item.violation}</p>
-              <p><strong>Đơn vị xử lý:</strong> ${item.agency}</p>
-              <hr>
-            `;
-            resultDiv.appendChild(div);
-          });
-        } else {
-          resultDiv.innerHTML = '<p>Không có vi phạm nào được tìm thấy.</p>';
-        }
-      } catch (err) {
-        errorDiv.textContent = 'Lỗi kết nối: ' + err.message;
-      }
+      list.forEach((it, idx) => {
+        const div = document.createElement('div');
+        div.innerHTML = renderItem(it, idx);
+        box.appendChild(div.firstElementChild);
+      });
     }
+
+    // ====== SỰ KIỆN & LOGIC CHÍNH ======
+    (function init(){
+      const form = $('#lookupForm');
+      const plateInput = $('#plate');
+      const typeSelect = $('#type');
+      const resetBtn = $('#resetBtn');
+
+      // Prefill từ localStorage (nếu có)
+      try {
+        const saved = JSON.parse(localStorage.getItem('pn:last') || 'null');
+        if (saved?.plate) plateInput.value = saved.plate;
+        if (saved?.type) typeSelect.value = String(saved.type);
+      } catch {}
+
+      // Tự viết hoa khi gõ
+      plateInput.addEventListener('input', () => {
+        const caret = plateInput.selectionStart;
+        plateInput.value = plateInput.value.toUpperCase();
+        plateInput.setSelectionRange(caret, caret);
+      });
+
+      // Submit form
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearUI();
+
+        const rawPlate = plateInput.value.trim();
+        const plate = normalizePlate(rawPlate);
+        const type = Number(typeSelect.value);
+
+        if (!plate){
+          showError('Vui lòng nhập biển số xe.');
+          plateInput.focus(); return;
+        }
+        if (![1,2,3].includes(type)){
+          showError('Loại phương tiện không hợp lệ.'); return;
+        }
+
+        setLoading(true);
+
+        try {
+          const res = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ plate, type })
+          });
+
+          const rawText = await res.text();
+          let payload;
+          try { payload = JSON.parse(rawText); } catch { payload = null; }
+
+          if (!res.ok){
+            // Hiển thị lỗi chi tiết (kể cả upstreamStatus/body nếu backend trả về)
+            const msg = payload?.error || `Lỗi API (${res.status})`;
+            const detail = payload?.upstreamStatus ? {
+              upstreamStatus: payload.upstreamStatus,
+              upstreamBody: payload.upstreamBody
+            } : rawText;
+            showError(msg, detail);
+            return;
+          }
+
+          // Lưu truy vấn gần nhất
+          try { localStorage.setItem('pn:last', JSON.stringify({ plate, type })); } catch {}
+
+          showOk('Tra cứu thành công.');
+          renderResults(payload ?? {}, plate, type);
+        } catch (err){
+          showError('Lỗi kết nối tới máy chủ.', err?.message || String(err));
+        } finally {
+          setLoading(false);
+        }
+      });
+
+      // Nút xoá
+      resetBtn.addEventListener('click', () => {
+        plateInput.value = '';
+        $('#results').innerHTML = '';
+        $('.status').innerHTML = '';
+        plateInput.focus();
+      });
+
+      // Enter trong input = submit
+      plateInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') form.requestSubmit();
+      });
+    })();
   </script>
 </body>
 </html>

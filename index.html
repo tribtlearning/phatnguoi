@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <title>Tra cứu phạt nguội</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f6f8; padding: 20px; }
+    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
     .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    h1 { text-align: center; color: #004080; }
+    h1 { text-align: center; color: #333; }
     label { display: block; margin-top: 15px; }
     input, select { width: 100%; padding: 10px; margin-top: 5px; }
-    button { margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button { margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
     button:hover { background: #0056b3; }
     .result { margin-top: 30px; }
     .error { color: red; margin-top: 10px; }
@@ -31,7 +31,6 @@
     <div class="error" id="error"></div>
     <div class="result" id="result"></div>
   </div>
-
   <script>
     async function search() {
       const plate = document.getElementById('plate').value.trim();
@@ -53,26 +52,29 @@
           body: JSON.stringify({ plate, type })
         });
 
-        const data = await res.json();
-
-        if (!data || !data.data || data.data.length === 0) {
-          resultDiv.innerHTML = '<p>Không tìm thấy vi phạm nào.</p>';
+        if (!res.ok) {
+          errorDiv.textContent = 'Lỗi khi gọi API: ' + res.status;
           return;
         }
 
-        data.data.forEach(item => {
-          const div = document.createElement('div');
-          div.innerHTML = `
-            <p><strong>Thời gian:</strong> ${item.time}</p>
-            <p><strong>Địa điểm:</strong> ${item.location}</p>
-            <p><strong>Hành vi:</strong> ${item.violation}</p>
-            <p><strong>Đơn vị xử lý:</strong> ${item.agency}</p>
-            <hr>
-          `;
-          resultDiv.appendChild(div);
-        });
+        const data = await res.json();
+        if (data.data && data.data.length > 0) {
+          data.data.forEach(item => {
+            const div = document.createElement('div');
+            div.innerHTML = `
+              <p><strong>Thời gian:</strong> ${item.time}</p>
+              <p><strong>Địa điểm:</strong> ${item.location}</p>
+              <p><strong>Hành vi:</strong> ${item.violation}</p>
+              <p><strong>Đơn vị xử lý:</strong> ${item.agency}</p>
+              <hr>
+            `;
+            resultDiv.appendChild(div);
+          });
+        } else {
+          resultDiv.innerHTML = '<p>Không có vi phạm nào được tìm thấy.</p>';
+        }
       } catch (err) {
-        errorDiv.textContent = 'Lỗi kết nối hoặc API không phản hồi.';
+        errorDiv.textContent = 'Lỗi kết nối: ' + err.message;
       }
     }
   </script>

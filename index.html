@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -6,78 +5,30 @@
   <title>Tra cứu phạt nguội</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      margin: 0;
-      padding: 20px;
-    }
-    .container {
-      max-width: 600px;
-      margin: auto;
-      background: white;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    h1 {
-      text-align: center;
-      color: #004080;
-    }
-    label {
-      display: block;
-      margin-top: 15px;
-      font-weight: bold;
-    }
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
-    button {
-      margin-top: 20px;
-      padding: 12px;
-      width: 100%;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    .result {
-      margin-top: 30px;
-    }
-    .violation {
-      background: #f9f9f9;
-      border-left: 4px solid #dc3545;
-      padding: 10px;
-      margin-bottom: 10px;
-    }
-    .success {
-      border-left-color: #28a745;
-    }
+    body { font-family: Arial, sans-serif; background: #f4f6f8; padding: 20px; }
+    .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h1 { text-align: center; color: #004080; }
+    label { display: block; margin-top: 15px; }
+    input, select { width: 100%; padding: 10px; margin-top: 5px; }
+    button { margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    .result { margin-top: 30px; }
+    .error { color: red; margin-top: 10px; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Tra cứu phạt nguội</h1>
-    <label for="plate">Biển số xe</label>
+    <label for="plate">Biển số xe:</label>
     <input type="text" id="plate" placeholder="VD: 30A12345">
-
-    <label for="type">Loại phương tiện</label>
+    <label for="type">Loại phương tiện:</label>
     <select id="type">
       <option value="1">Ô tô</option>
       <option value="2">Xe máy</option>
       <option value="3">Xe đạp điện</option>
     </select>
-
     <button onclick="search()">Tra cứu</button>
-
+    <div class="error" id="error"></div>
     <div class="result" id="result"></div>
   </div>
 
@@ -85,45 +36,43 @@
     async function search() {
       const plate = document.getElementById('plate').value.trim();
       const type = document.getElementById('type').value;
+      const errorDiv = document.getElementById('error');
       const resultDiv = document.getElementById('result');
+      errorDiv.textContent = '';
       resultDiv.innerHTML = '';
 
       if (!plate) {
-        alert('Vui lòng nhập biển số xe');
+        errorDiv.textContent = 'Vui lòng nhập biển số xe.';
         return;
       }
 
       try {
-        const res = await fetch('https://phatnguoixe.com/api/violation', {
+        const res = await fetch('/api/violation', {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({plate: plate, type: type})
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plate, type })
         });
+
         const data = await res.json();
 
-        if (data.success && data.data.length > 0) {
-          data.data.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'violation';
-            div.innerHTML = `
-              <strong>Thời gian:</strong> ${item.time}<br>
-              <strong>Địa điểm:</strong> ${item.location}<br>
-              <strong>Hành vi:</strong> ${item.violation}<br>
-              <strong>Cơ quan xử lý:</strong> ${item.agency}
-            `;
-            resultDiv.appendChild(div);
-          });
-        } else {
-          const div = document.createElement('div');
-          div.className = 'violation success';
-          div.innerHTML = 'Không tìm thấy vi phạm nào cho biển số này.';
-          resultDiv.appendChild(div);
+        if (!data || !data.data || data.data.length === 0) {
+          resultDiv.innerHTML = '<p>Không tìm thấy vi phạm nào.</p>';
+          return;
         }
-      } catch (error) {
-        const div = document.createElement('div');
-        div.className = 'violation';
-        div.innerHTML = 'Lỗi kết nối đến hệ thống tra cứu.';
-        resultDiv.appendChild(div);
+
+        data.data.forEach(item => {
+          const div = document.createElement('div');
+          div.innerHTML = `
+            <p><strong>Thời gian:</strong> ${item.time}</p>
+            <p><strong>Địa điểm:</strong> ${item.location}</p>
+            <p><strong>Hành vi:</strong> ${item.violation}</p>
+            <p><strong>Đơn vị xử lý:</strong> ${item.agency}</p>
+            <hr>
+          `;
+          resultDiv.appendChild(div);
+        });
+      } catch (err) {
+        errorDiv.textContent = 'Lỗi kết nối hoặc API không phản hồi.';
       }
     }
   </script>

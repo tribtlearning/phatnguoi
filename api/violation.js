@@ -22,12 +22,11 @@ export default async function handler(req, res) {
       body: JSON.stringify({ plate, type })
     });
 
-    const data = await response.json();
-
-    if (!data.success) {
-      return res.status(502).json({ error: 'API phatnguoixe.com không phản hồi đúng', detail: data });
+    if (!response.ok) {
+      return res.status(502).json({ error: 'Không thể kết nối đến API phatnguoixe.com' });
     }
 
+    const data = await response.json();
     res.status(200).json(data);
   } catch (error) {
     res.status(500).json({ error: 'Lỗi server', detail: error.message });

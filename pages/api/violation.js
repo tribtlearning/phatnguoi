@@ -1,11 +1,8 @@
 // pages/api/violation.js
-
 export const config = { api: { bodyParser: true } };
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
     const { plate, type } = req.body || {};
@@ -13,14 +10,14 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Thiếu thông tin biển số hoặc loại xe' });
     }
 
-    // Chuẩn hoá: bỏ khoảng trắng/dấu gạch, uppercase
+    // Chuẩn hoá input để tránh sai format
     const normalizedPlate = String(plate).toUpperCase().replace(/[\s-]/g, '');
     const typeNum = Number(type);
     if (![1, 2, 3].includes(typeNum)) {
       return res.status(400).json({ error: 'Loại phương tiện không hợp lệ' });
     }
 
-    // Timeout 15s cho fetch
+    // Timeout cho fetch (Undici) – tránh treo vô hạn
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 15000);
 
@@ -31,21 +28,21 @@ export default async function handler(req, res) {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          // Thêm UA/Referer để tránh upstream chặn bot
-          'User-Agent': 'phatnguoi-proxy/1.0 (+https://phatnguoi-topaz.vercel.app)',
-          'Referer': 'https://phatnguoi-topaz.vercel.app',
+          // Một số upstream/WAF sẽ chặn request thiếu UA/Referer
+          'User-Agent': 'phatnguoi-proxy/1.0 (+https://phatnguoi.hugo.io.vn)',
+          'Referer': 'https://phatnguoi.hugo.io.vn',
         },
         body: JSON.stringify({ plate: normalizedPlate, type: typeNum }),
         signal: controller.signal,
       });
     } catch (err) {
-      console.error('[api/violation] fetch error:', err);
+      console.error('[api/violation] fetch error:', err); // Xem trong Vercel Runtime Logs
       clearTimeout(timer);
       return res.status(500).json({ error: 'Lỗi server khi gọi upstream', detail: err.message });
     }
     clearTimeout(timer);
 
-    // Đọc text trước, rồi parse JSON tránh crash nếu upstream trả HTML
+    // Đọc text trước rồi parse JSON để tránh crash nếu upstream trả HTML
     const text = await response.text();
     let payload;
     try { payload = JSON.parse(text); } catch { payload = null; }
